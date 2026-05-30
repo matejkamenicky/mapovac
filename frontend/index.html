@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mapovač — generátor OB map</title>
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: system-ui, sans-serif; display: flex; height: 100vh; }
+      #sidebar { width: 360px; padding: 16px; overflow-y: auto; border-right: 1px solid #ccc; }
+      #map { flex: 1; }
+      h1 { font-size: 18px; margin: 0 0 12px; }
+      label { display: block; margin: 10px 0 4px; font-size: 13px; font-weight: 600; }
+      input, select, button { width: 100%; padding: 8px; font-size: 14px; }
+      button { margin-top: 16px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; }
+      button:disabled { background: #9ca3af; cursor: not-allowed; }
+      .row { display: flex; gap: 8px; }
+      .row > * { flex: 1; }
+      #status { margin-top: 16px; padding: 12px; background: #f3f4f6; border-radius: 4px; font-size: 13px; }
+      #status .bar { height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; margin-top: 6px; }
+      #status .bar > div { height: 100%; background: #2563eb; transition: width 0.3s; }
+      #downloads a { display: block; margin-top: 6px; color: #2563eb; }
+      .hint { font-size: 12px; color: #6b7280; margin-top: 4px; }
+    </style>
+  </head>
+  <body>
+    <aside id="sidebar">
+      <h1>Mapovač — OB mapa ČR</h1>
+      <p class="hint">Vyber výřez tažením na mapě (Shift + táhnout) a klikni Generovat.</p>
+
+      <label>BBox (WGS84)</label>
+      <div class="row">
+        <input id="bbox-w" placeholder="W" step="0.0001" type="number" />
+        <input id="bbox-s" placeholder="S" step="0.0001" type="number" />
+      </div>
+      <div class="row">
+        <input id="bbox-e" placeholder="E" step="0.0001" type="number" />
+        <input id="bbox-n" placeholder="N" step="0.0001" type="number" />
+      </div>
+
+      <label>Měřítko</label>
+      <select id="scale">
+        <option value="10000">1 : 10 000</option>
+        <option value="7500">1 : 7 500</option>
+      </select>
+
+      <label><input type="checkbox" id="opt-experimental" /> Experimentální body (kameny, kupky, stromy)</label>
+      <label><input type="checkbox" id="opt-zabaged" /> Použít ZABAGED (vyžaduje účet ČÚZK)</label>
+      <label><input type="checkbox" id="opt-advanced" /> <strong>Pokročilé generování</strong> (ortofoto+NDVI, DMPOK, katastr, DIBAVOD, RÚIAN, deklinace) — pomalejší</label>
+
+      <button id="submit">Generovat mapu</button>
+
+      <div id="status" hidden>
+        <div id="status-msg">…</div>
+        <div class="bar"><div id="status-bar" style="width:0%"></div></div>
+      </div>
+
+      <div id="downloads"></div>
+    </aside>
+    <div id="map"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
