@@ -90,6 +90,29 @@ univerzálně ověřit) — bez konfigurace se přeskočí.
 Pokročilé generování přepíná LiDAR vstup z DMP1G na **DMPOK** (hustší → lepší
 3 stupně zeleně); když DMPOK pro oblast není, spadne zpět na DMP1G.
 
+### ZABAGED® (autoritativní vektory ČÚZK)
+
+Zaškrtávátko „Použít ZABAGED" zapne přesné cesty/železnice/vodu/budovy z ČÚZK
+místo OSM. ZABAGED GPKG je **jeden soubor pro celý stát (~6 GB)**, takže model je
+stáhnout jednou → app čte jen výřez (přes prostorový index pyogrio).
+
+```bash
+# stáhne ~6 GB ZIP z ATOM a rozbalí (jednorázově)
+.venv/bin/python -m backend.data_sources.zabaged
+# vypíše cestu k .gpkg → nastav:
+export MAPOVAC_ZABAGED_GPKG=/cesta/k/ZABAGED-5514.gpkg
+# (ladění) výpis vrstev:
+.venv/bin/python -m backend.data_sources.zabaged layers
+```
+
+| Proměnná | Účel | Default |
+|---|---|---|
+| `MAPOVAC_ZABAGED_GPKG` | cesta k lokálnímu ZABAGED GPKG (EPSG:5514) | — (bez něj se ZABAGED přeskočí) |
+
+Mapování vrstev → ISOM je v `backend/data_sources/zabaged.py` (`_RULES`,
+klíčová slova v názvu vrstvy). Když se některá vrstva nenamapuje správně,
+uprav pravidla podle výpisu `… zabaged layers`.
+
 **Známé ATOM feedy ČÚZK (S-JTSK, LAZ):**
 
 | Dataset | Co obsahuje | URL |

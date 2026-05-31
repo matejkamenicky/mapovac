@@ -35,6 +35,55 @@ def _is_closed(coords: list[tuple[float, float]]) -> bool:
     return len(coords) >= 3 and coords[0] == coords[-1]
 
 
+def _stitch_rings(segments: list[list[tuple[float, float]]]) -> list[list[tuple[float, float]]]:
+    """Pospojuje úseky (members multipolygonu) sdílející koncové body do
+    uzavřených prstenců. OSM multipolygon má outer/inner často rozsekané na
+    víc way — bez spojení by vznikly otevřené/chybné polygony.
+
+    Sdílené uzly mají identické lat/lon → po projekci identické (x, y), takže
+    porovnání koncových bodů na rovnost funguje.
+    """
+    segs = [list(s) for s in segments if len(s) >= 2]
+    rings: list[list[tuple[float, float]]] = []
+    while segs:
+        cur = segs.pop()
+        changed = True
+        while not _is_closed(cur) and changed:
+            changed = False
+            for i, s in enumerate(segs):
+                if cur[-1] == s[0]:
+                    cur = cur + s[1:]
+                elif cur[-1] == s[-1]:
+                    cur = cur + s[-2::-1]
+                elif cur[0] == s[-1]:
+                    cur = s + cur[1:]
+                elif cur[0] == s[0]:
+                    cur = s[::-1] + cur[1:]
+                else:
+                    continue
+                segs.pop(i)
+                changed = True
+                break
+        if len(cur) >= 3:
+            if cur[0] != cur[-1]:
+                cur = cur + [cur[0]]
+            rings.append(cur)
+    return rings
+
+
+def _relation_rings(el: dict) -> list[list[tuple[float, float]]]:
+    """Sestaví outer prstence multipolygon relace (inner/díry zatím vynecháme —
+    vegetace/voda je překreslí navrch). Každý outer = jeden polygon."""
+    outers: list[list[tuple[float, float]]] = []
+    for m in el.get("members", []):
+        if m.get("type") != "way" or m.get("role") not in ("outer", ""):
+            continue
+        coords = _way_coords_sjtsk(m.get("geometry") or [])
+        if len(coords) >= 2:
+            outers.append(coords)
+    return _stitch_rings(outers)
+
+
 def parse(osm_json_path: Path) -> Iterator[Feature]:
     """Vrátí features s ISOM stylem, reprojektované do S-JTSK.
 
@@ -58,13 +107,20 @@ def parse(osm_json_path: Path) -> Iterator[Feature]:
 
     data = json.loads(osm_json_path.read_text("utf-8"))
     for el in data.get("elements", []):
-        if el.get("type") != "way":
-            # relace zatím ignorujeme (M5+)
+        etype = el.get("type")
+        if etype not in ("way", "relation"):
             continue
         tags = el.get("tags") or {}
         style = style_for(tags)
         if style is None:
             continue
+
+        # Multipolygon relace (landuse/natural/water/building) → polygon(y).
+        if etype == "relation":
+            for ring in _relation_rings(el):
+                yield Feature(style=style, parts=[ring], tags=tags)
+            continue
+
         geom = el.get("geometry") or []
         coords = _way_coords_sjtsk(geom)
         if len(coords) < 2:

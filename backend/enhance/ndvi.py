@@ -18,6 +18,7 @@ from PIL import Image
 
 from backend.lidar.crop import WorldFile
 from backend.lidar.recolor import ISOM_GREEN_30, ISOM_YELLOW, WHITE
+from backend.vector.isom_mapping import YELLOW_50
 
 
 def _veg_index(samp: np.ndarray, cir: bool) -> np.ndarray:
@@ -77,7 +78,9 @@ def correct_vegetation(
     # otevřenou plochu od porostu (obojí zelené), tak to vynecháme.
     to_veg = (is_yellow & (vi > veg_high)) if cir else np.zeros_like(is_yellow)
 
-    barr[to_open] = ISOM_YELLOW
+    # Holina detekovaná z ortofota = paseka → 403 rough open (Yellow 50 %),
+    # ne louka.
+    barr[to_open] = YELLOW_50[:3]
     if cir:
         barr[to_veg] = ISOM_GREEN_30
 

@@ -14,6 +14,10 @@ from PIL import Image
 
 from backend.data_sources.projection import bbox_wgs_to_sjtsk
 
+# Pullauta výstup přes více dlaždic bývá >100 Mpx — vypneme PIL ochranu proti
+# „decompression bomb", jinak by velké mapy odmítl načíst.
+Image.MAX_IMAGE_PIXELS = None
+
 
 @dataclass(frozen=True)
 class WorldFile:

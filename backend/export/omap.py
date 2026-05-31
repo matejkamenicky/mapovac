@@ -54,9 +54,55 @@ COLORS: list[OmapColor] = [
     OmapColor("Green 100%", 0.76, 0.0, 0.91, 0.0),     # 3 fight
     OmapColor("Green 60%", 0.456, 0.0, 0.546, 0.0),    # 4 walk
     OmapColor("Green 30%", 0.228, 0.0, 0.273, 0.0),    # 5 slow run
-    OmapColor("Yellow", 0.0, 0.27, 0.79, 0.0),         # 6 open
+    OmapColor("Yellow", 0.0, 0.27, 0.79, 0.0),         # 6 open (401)
+    OmapColor("Yellow 50%", 0.0, 0.135, 0.395, 0.0),   # 7 rough open (403)
+    OmapColor("Brown 50%", 0.0, 0.28, 0.5, 0.09),      # 8 výplň vozovky (502)
+    OmapColor("Yellow 100%/Green 50%", 0.38, 0.27, 0.886, 0.0),  # 9 zákaz vstupu (520)
+    OmapColor("Blue 50%", 0.5, 0.0, 0.0, 0.0),         # 10 brodelná voda (302)
 ]
-COL_BLACK, COL_BLUE, COL_BROWN, COL_GREEN, COL_GREEN60, COL_GREEN30, COL_YELLOW = range(7)
+(COL_BLACK, COL_BLUE, COL_BROWN, COL_GREEN, COL_GREEN60, COL_GREEN30,
+ COL_YELLOW, COL_YELLOW50, COL_BROWN50, COL_OLIVE, COL_BLUE50) = range(11)
+
+# ISOM 502 Wide road — hnědá výplň (Brown 50 %) + černé lemovky (borders).
+_WIDE_ROAD_502_BODY = (
+    f'<line_symbol color="{COL_BROWN50}" line_width="450" minimum_length="0" '
+    'join_style="1" cap_style="0" start_offset="0" end_offset="0" '
+    'segment_length="6000" end_length="0" show_at_least_one_symbol="true" '
+    'minimum_mid_symbol_count="0" minimum_mid_symbol_count_when_closed="0" '
+    'dash_length="6000" break_length="1500" dashes_in_group="1" '
+    'in_group_break_length="750" mid_symbols_per_spot="0" mid_symbol_distance="0">'
+    f'<borders><border color="{COL_BLACK}" width="210" shift="105"/></borders>'
+    '</line_symbol>'
+)
+# ISOM 509 Railway — plná černá s pražci (zjednodušeno: silná černá přerušovaná).
+_RAILWAY_509_BODY = (
+    f'<line_symbol color="{COL_BLACK}" line_width="525" minimum_length="0" '
+    'join_style="1" cap_style="0" start_offset="0" end_offset="0" dashed="true" '
+    'segment_length="6000" end_length="0" show_at_least_one_symbol="true" '
+    'minimum_mid_symbol_count="0" minimum_mid_symbol_count_when_closed="0" '
+    'dash_length="2250" break_length="1500" dashes_in_group="1" '
+    'in_group_break_length="750" mid_symbols_per_spot="0" mid_symbol_distance="0"/>'
+)
+
+# ISOM 308 Marsh — vodorovné modré čárky (LinePattern), bez výplně.
+_MARSH_308_BODY = (
+    '<area_symbol inner_color="-1" min_area="0" patterns="1" rotatable="false">'
+    f'<pattern type="1" angle="0" rotatable="false" line_spacing="450" '
+    f'line_offset="0" offset_along_line="0" color="{COL_BLUE}" line_width="150"/>'
+    '</area_symbol>'
+)
+
+# ISOM 412 Cultivated land — žlutá výplň + mřížka černých teček (PointPattern).
+_CULTIVATED_412_BODY = (
+    f'<area_symbol inner_color="{COL_YELLOW}" min_area="0" patterns="1" '
+    'rotatable="false"><pattern type="2" angle="0" rotatable="false" '
+    'line_spacing="1200" line_offset="0" offset_along_line="0" '
+    'point_distance="1200" no_clipping="0">'
+    '<symbol type="1" code="" name="Pattern fill">'
+    f'<point_symbol rotatable="true" inner_radius="150" inner_color="{COL_BLACK}" '
+    'outer_width="0" outer_color="-1" elements="0"/></symbol>'
+    '</pattern></area_symbol>'
+)
 
 
 # ---------------------------------------------------------------------------
@@ -74,24 +120,46 @@ class OmapSymbol:
     raw_body: str | None = None  # vlastní XML těla symbolu (přesné ISOM symboly)
 
 
-# Přesný ISOM 516 Fence z OO Mapper setu — plná čára s kolmým zoubkem
-# (mid_symbol). Barva 0 = Black v naší paletě.
+# ISOM 516 Fence (aktualizace 2024) — plná čára 0.14 mm se zoubkem (mid_symbol)
+# na jednu stranu pod 60°, délka 0.4 mm, rozteč 2.0 mm. Zoubek (0,0)→(200,346)
+# = 0.4 mm pod úhlem 60° (cos60·400=200, sin60·400=346). Barva 0 = Black.
 _FENCE_516_BODY = (
-    '<line_symbol color="0" line_width="210" minimum_length="2250" '
-    'join_style="1" cap_style="0" segment_length="3000" end_length="1500" '
+    '<line_symbol color="0" line_width="140" minimum_length="2250" '
+    'join_style="1" cap_style="0" segment_length="2000" end_length="1000" '
     'show_at_least_one_symbol="true" dash_length="6000" break_length="1500" '
     'dashes_in_group="1" in_group_break_length="750" mid_symbols_per_spot="1" '
     'mid_symbol_distance="0"><mid_symbol>'
     '<symbol type="1" code="" name="Mid symbol">'
     '<point_symbol rotatable="true" inner_radius="1500" inner_color="-1" '
     'outer_width="0" outer_color="-1" elements="1"><element>'
+    '<symbol type="2" code=""><line_symbol color="0" line_width="140" '
+    'segment_length="6000" end_length="0" dash_length="6000" break_length="1500" '
+    'dashes_in_group="1" in_group_break_length="750" mid_symbols_per_spot="1" '
+    'mid_symbol_distance="0"/></symbol>'
+    '<object type="1"><coords count="2">0 0;200 346;</coords>'
+    '<pattern rotation="0"><coord x="0" y="0"/></pattern></object>'
+    '</element></point_symbol></symbol></mid_symbol></line_symbol>'
+)
+
+
+# Přesný ISOM 510 Power line z OO Mapper setu — plná čára 0.21 mm s příčkami
+# na obě strany (dash_symbol, ±0.555 mm) v rozteči 6 mm. Barva 0 = Black.
+_POWER_510_BODY = (
+    '<line_symbol color="0" line_width="210" minimum_length="7500" '
+    'join_style="1" cap_style="0" segment_length="6000" end_length="0" '
+    'show_at_least_one_symbol="true" dash_length="6000" break_length="1500" '
+    'dashes_in_group="1" in_group_break_length="750" mid_symbols_per_spot="1" '
+    'mid_symbol_distance="0"><dash_symbol>'
+    '<symbol type="1" code="" name="Dash symbol">'
+    '<point_symbol rotatable="true" inner_radius="1500" inner_color="-1" '
+    'outer_width="0" outer_color="-1" elements="1"><element>'
     '<symbol type="2" code=""><line_symbol color="0" line_width="210" '
     'segment_length="6000" end_length="0" dash_length="6000" break_length="1500" '
     'dashes_in_group="1" in_group_break_length="750" mid_symbols_per_spot="1" '
     'mid_symbol_distance="0"/></symbol>'
-    '<object type="1"><coords count="2">0 0;375 650;</coords>'
+    '<object type="1"><coords count="2">0 -555;0 555;</coords>'
     '<pattern rotation="0"><coord x="0" y="0"/></pattern></object>'
-    '</element></point_symbol></symbol></mid_symbol></line_symbol>'
+    '</element></point_symbol></symbol></dash_symbol></line_symbol>'
 )
 
 
@@ -103,21 +171,54 @@ SYMBOLS: list[OmapSymbol] = [
     OmapSymbol("201", "Impassable cliff", "line", COL_BLACK, line_width=525),
     OmapSymbol("202", "Cliff", "line", COL_BLACK, line_width=375),
     OmapSymbol("112", "Knoll", "point", COL_BROWN, radius=300),
+    OmapSymbol("109", "Small knoll", "point", COL_BROWN, radius=375),
+    OmapSymbol("111", "Small depression", "point", COL_BROWN, raw_body=(
+        f'<point_symbol inner_radius="0" inner_color="-1" outer_width="180" '
+        f'outer_color="{COL_BROWN}" elements="0" rotatable="false"/>'
+    )),
+    OmapSymbol("206", "Boulder", "point", COL_BLACK, radius=200),
+    OmapSymbol("418", "Prominent tree", "point", COL_GREEN, raw_body=(
+        f'<point_symbol inner_radius="75" inner_color="-1" outer_width="300" '
+        f'outer_color="{COL_GREEN}" elements="0" rotatable="false"/>'
+    )),
     OmapSymbol("401", "Open land", "area", COL_YELLOW),
+    OmapSymbol("403", "Rough open land", "area", COL_YELLOW50),
+    OmapSymbol("412", "Cultivated land", "area", COL_YELLOW, raw_body=_CULTIVATED_412_BODY),
     OmapSymbol("406", "Vegetation: slow running", "area", COL_GREEN30),
     OmapSymbol("408", "Vegetation: walk", "area", COL_GREEN60),
     OmapSymbol("410", "Vegetation: fight", "area", COL_GREEN),
     OmapSymbol("301", "Uncrossable body of water", "area", COL_BLUE),
+    OmapSymbol("302", "Shallow body of water", "area", COL_BLUE50),
+    OmapSymbol("308", "Marsh", "area", COL_BLUE, raw_body=_MARSH_308_BODY),
     OmapSymbol("304", "Crossable watercourse", "line", COL_BLUE, line_width=450),
     OmapSymbol("305", "Small crossable watercourse", "line", COL_BLUE, line_width=270),
-    OmapSymbol("502", "Wide road", "line", COL_BLACK, line_width=450),
-    OmapSymbol("503", "Road", "line", COL_BLACK, line_width=525),
-    OmapSymbol("504", "Vehicle track", "line", COL_BLACK, line_width=525, dash=(4500, 375)),
+    OmapSymbol("501", "Paved area", "area", COL_BROWN50),
+    OmapSymbol("502", "Wide road", "line", COL_BROWN50, raw_body=_WIDE_ROAD_502_BODY),
+    OmapSymbol("503", "Road", "line", COL_BLACK, line_width=350),
+    OmapSymbol("504", "Vehicle track", "line", COL_BLACK, line_width=350, dash=(3000, 250)),
     OmapSymbol("505", "Footpath", "line", COL_BLACK, line_width=375, dash=(3000, 375)),
     OmapSymbol("506", "Small footpath", "line", COL_BLACK, line_width=270, dash=(1500, 375)),
+    OmapSymbol("509", "Railway", "line", COL_BLACK, raw_body=_RAILWAY_509_BODY),
+    # 415 Distinct cultivation boundary — plná černá 0.21 mm (hranice polí/luk).
+    OmapSymbol("415", "Distinct cultivation boundary", "line", COL_BLACK, line_width=210),
+    # 416 Distinct vegetation boundary — ZELENÁ ČÁRKOVANÁ (tmavě zelená 0.14 mm,
+    # čárka 0.3 / mezera 0.2 mm). Zřetelná hranice porostů v lese.
+    OmapSymbol("416", "Distinct vegetation boundary", "line", COL_GREEN,
+               line_width=140, dash=(300, 200)),
     OmapSymbol("521", "Building", "area", COL_BLACK),
-    OmapSymbol("516", "Fence", "line", COL_BLACK, line_width=210, raw_body=_FENCE_516_BODY),
-    OmapSymbol("510", "Power line", "line", COL_BLACK, line_width=210),
+    OmapSymbol("516", "Fence", "line", COL_BLACK, line_width=140, raw_body=_FENCE_516_BODY),
+    OmapSymbol("507", "Less distinct small footpath", "line", COL_BLACK, raw_body=(
+        '<line_symbol color="0" line_width="180" minimum_length="0" '
+        'join_style="1" cap_style="0" start_offset="0" end_offset="0" '
+        'dashed="true" segment_length="6000" end_length="0" '
+        'show_at_least_one_symbol="true" minimum_mid_symbol_count="0" '
+        'minimum_mid_symbol_count_when_closed="0" dash_length="800" '
+        'break_length="1000" dashes_in_group="2" in_group_break_length="250" '
+        'mid_symbols_per_spot="0" mid_symbol_distance="0"/>'
+    )),
+    OmapSymbol("510", "Power line", "line", COL_BLACK, line_width=210, raw_body=_POWER_510_BODY),
+    OmapSymbol("520", "Area that shall not be entered", "area", COL_OLIVE),
+    OmapSymbol("601", "Magnetic north line", "line", COL_BLUE, line_width=120),
 ]
 _CODE_TO_INDEX = {s.code: i for i, s in enumerate(SYMBOLS)}
 
@@ -155,6 +256,9 @@ class OmapData:
     formlines: list[list[tuple[float, float]]] = field(default_factory=list)
     cliffs: list[list[tuple[float, float]]] = field(default_factory=list)
     knolls: list[tuple[float, float]] = field(default_factory=list)
+    # obecné bodové prvky: (ISOM kód, x, y) — kupky 109, prohlubně 111,
+    # balvany 206, výrazné stromy 418.
+    points: list[tuple[str, float, float]] = field(default_factory=list)
     # plochy/linie (code, kind, list rings/lines)
     areas: list[tuple[str, list[list[tuple[float, float]]]]] = field(default_factory=list)
     lines: list[tuple[str, list[list[tuple[float, float]]]]] = field(default_factory=list)
@@ -397,6 +501,8 @@ def build_omap(
             w.add_line(code, line)
     for (e, n) in data.knolls:
         w.add_point("112", e, n)
+    for (code, e, n) in data.points:
+        w.add_point(code, e, n)
 
     objects_xml = "".join(w.objects)
     if template_image:
