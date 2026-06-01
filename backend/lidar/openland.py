@@ -19,13 +19,17 @@ import laspy
 from backend.lidar.chm import Raster, fill_nans, rasterize
 from backend.lidar.crop import WorldFile
 from backend.lidar.recolor import ISOM_YELLOW
-from backend.vector.isom_mapping import OLIVE_520 as _OLIVE, YELLOW_50 as _Y50, px_per_mm
+from backend.vector.isom_mapping import (
+    GRAY as _GRAY, OLIVE_520 as _OLIVE, YELLOW_50 as _Y50, px_per_mm,
+)
 
 YELLOW_50 = _Y50[:3]  # RGB (bez alfa) pro přiřazení do RGB rastru
 OLIVE_520 = _OLIVE[:3]  # ISOM 520 olivová (Yellow 100 % + Green 50 %)
+GRAY_213 = _GRAY[:3]   # ISOM 213/214 holá skála (šedá)
 
 # Kód plochy → barva výplně v rastru (zachová vrstevnice/černé symboly).
-_FILL_COLORS = {"401": ISOM_YELLOW, "412": ISOM_YELLOW, "520": OLIVE_520}
+# Bare rock (213) plníme v rastru a NEpřekrýváme jím vrstevnice/srázy/balvany.
+_FILL_COLORS = {"401": ISOM_YELLOW, "412": ISOM_YELLOW, "520": OLIVE_520, "213": GRAY_213}
 
 
 def mark_rough_open(

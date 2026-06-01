@@ -297,9 +297,11 @@ def render_overlay(
     # Forest (405) a paseku (403) vynecháme úplně. Louku (401) a pole (412)
     # z autoritativního OSM/ZABAGED necháme — ale jen jako ČERNÝ OBRYS (bez
     # výplně), jako na mapant. LiDAR paseky obrys nemají (nejsou to Feature).
+    # 403 paseka / 405 les / 213 holá skála: výplň řeší rastr (zachová
+    # vrstevnice/srázy), overlay je NEkreslí, ať nepřekryjí detail neprůhlednou plochou.
     features = [f for f in features
                 if not (f.style.kind == "polygon"
-                        and f.style.isom_code in ("403", "405"))]
+                        and f.style.isom_code in ("403", "405", "213"))]
     _OUTLINE_ONLY = {"401", "412", "520"}  # louka/pole/zákaz vstupu → jen černý obrys
     # Z-order: nižší z první (podklady → cesty → budovy)
     features.sort(key=lambda f: f.style.z)

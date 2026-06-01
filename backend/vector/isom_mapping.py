@@ -235,7 +235,11 @@ NATURAL_STYLES: dict[str, IsomStyle] = {
     "heath":     _poly("403", (255, 245, 180, 255), z=3),
     "water":     WATER_AREA,
     "wetland":   MARSH,
-    "bare_rock": _poly("213", GRAY, z=18),
+    # POZN.: OSM `natural=bare_rock` zde NEkreslíme jako plochu (213 holá skála).
+    # V ČR/na Šumavě bývá takto otagovaný strmý svah s jednotlivými srázy, ne
+    # souvislá holá skála — a ty srázy už spolehlivě generuje Karttapullautin
+    # (černé srázové linie z LiDARu). Plošná šedá by je jen zavádějícím způsobem
+    # překryla. (Gray symbol 213 i tak zůstává pro případný autoritativní zdroj.)
 }
 
 # --- LINIE NEKLASIFIKOVANÉ JINAK ---
@@ -389,7 +393,7 @@ def style_for(tags: dict) -> IsomStyle | None:
         if st is not None:
             return st
     nat = tags.get("natural")
-    if nat in ("wetland", "bare_rock"):
+    if nat == "wetland":
         return NATURAL_STYLES.get(nat)
     if nat in ("heath", "scrub", "fell", "shrubbery"):
         return ROUGH_OPEN          # 403 rough open land (paseka/vřesoviště)

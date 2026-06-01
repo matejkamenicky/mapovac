@@ -59,9 +59,10 @@ COLORS: list[OmapColor] = [
     OmapColor("Brown 50%", 0.0, 0.28, 0.5, 0.09),      # 8 výplň vozovky (502)
     OmapColor("Yellow 100%/Green 50%", 0.38, 0.27, 0.886, 0.0),  # 9 zákaz vstupu (520)
     OmapColor("Blue 50%", 0.5, 0.0, 0.0, 0.0),         # 10 brodelná voda (302)
+    OmapColor("Black 30%", 0.0, 0.0, 0.0, 0.30),       # 11 holá skála (213/214)
 ]
 (COL_BLACK, COL_BLUE, COL_BROWN, COL_GREEN, COL_GREEN60, COL_GREEN30,
- COL_YELLOW, COL_YELLOW50, COL_BROWN50, COL_OLIVE, COL_BLUE50) = range(11)
+ COL_YELLOW, COL_YELLOW50, COL_BROWN50, COL_OLIVE, COL_BLUE50, COL_GRAY) = range(12)
 
 # ISOM 502 Wide road — hnědá výplň (Brown 50 %) + černé lemovky (borders).
 _WIDE_ROAD_502_BODY = (
@@ -218,6 +219,7 @@ SYMBOLS: list[OmapSymbol] = [
     )),
     OmapSymbol("510", "Power line", "line", COL_BLACK, line_width=210, raw_body=_POWER_510_BODY),
     OmapSymbol("520", "Area that shall not be entered", "area", COL_OLIVE),
+    OmapSymbol("213", "Bare rock", "area", COL_GRAY),
     OmapSymbol("601", "Magnetic north line", "line", COL_BLUE, line_width=120),
 ]
 _CODE_TO_INDEX = {s.code: i for i, s in enumerate(SYMBOLS)}
@@ -226,7 +228,6 @@ _CODE_TO_INDEX = {s.code: i for i, s in enumerate(SYMBOLS)}
 _CODE_ALIASES = {
     "305": "304",   # příkop → crossable watercourse
     "307": "301",   # mokřad → (modrá plocha) lake
-    "213": "202",   # holá skála → cliff
     "405": None,    # les = bílá = papír → nekreslíme
 }
 

@@ -1,0 +1,40 @@
+#!/bin/bash
+# Spouštěč Mapovače (macOS .app). Nastartuje FastAPI (servíruje API i frontend)
+# ODPOJENĚ na pozadí a otevře prohlížeč. Spouštěč se hned ukončí — proto macOS
+# appku neoznačí jako „nereaguje" (není to GUI app s event-loopem).
+set -u
+
+# Repo = 3 úrovně nad tímto skriptem (když .app leží v kořeni repa).
+HERE="$(cd "$(dirname "$0")" && pwd)"
+REPO="$(cd "$HERE/../../.." && pwd)"
+# Fallback na pevnou cestu (když je .app zkopírovaná jinam, např. /Applications).
+if [ ! -x "$REPO/.venv/bin/python" ]; then
+  REPO="/Users/matejkamenicky/moje aplikace/mapovac"
+fi
+cd "$REPO" || exit 1
+
+URL="http://127.0.0.1:8000"
+
+# Server běží? → jen otevři prohlížeč a skonči.
+if curl -s -o /dev/null "$URL/api/health"; then
+  open "$URL"
+  exit 0
+fi
+
+# Nastartuj server ODPOJENĚ (přežije ukončení spouštěče).
+# --reload: server si sám načte změny v kódu (žádný ruční restart po úpravách).
+nohup "$REPO/.venv/bin/python" -m uvicorn backend.api.main:app --port 8000 --reload \
+  >> "$REPO/cache/server.log" 2>&1 &
+disown
+
+# ODPOJENĚ počkej, až server naběhne, a otevři prohlížeč — aby spouštěč mohl
+# skončit OKAMŽITĚ (macOS pak appku neoznačí jako „nereaguje").
+nohup bash -c '
+  for _ in $(seq 1 60); do
+    if curl -s -o /dev/null "'"$URL"'/api/health"; then open "'"$URL"'"; break; fi
+    sleep 0.5
+  done
+' >/dev/null 2>&1 &
+disown
+
+exit 0

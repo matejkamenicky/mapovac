@@ -10,7 +10,21 @@ Inspirace: [mapant.fi](https://www.mapant.fi/about.php). Generace probíhá on-d
 > **Stav**: M1 (skeleton). Pipeline zatím produkuje placeholder soubory.
 > Viz `plán` v `/Users/matejkamenicky/.claude/plans/`.
 
-## Rychlý start
+## Spuštění jedním klikem (macOS, doporučeno)
+
+```bash
+# jednorázově: závislosti + sestavení frontendu
+python3.12 -m venv .venv && source .venv/bin/activate && pip install -e .
+bash scripts/build-frontend.sh
+```
+
+Pak stačí **dvojklik na `Mapovač.app`** (lze přetáhnout do Docku). Spustí server
+a otevře prohlížeč na `http://127.0.0.1:8000`. Zavřením appky (Quit) se server
+ukončí. FastAPI servíruje API i frontend jako **jeden proces** (žádný Node za běhu).
+
+> Po změně frontendu (`frontend/src`) spusť znovu `bash scripts/build-frontend.sh`.
+
+## Vývojový režim (dva procesy)
 
 ### Backend (Python 3.12)
 
@@ -21,7 +35,7 @@ pip install -e .
 uvicorn backend.api.main:app --reload --port 8000
 ```
 
-API běží na `http://127.0.0.1:8000`, docs na `/docs`.
+API běží na `http://127.0.0.1:8000` pod prefixem `/api`, docs na `/docs`.
 
 ### Frontend (Node 20+)
 
