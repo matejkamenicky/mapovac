@@ -295,6 +295,16 @@ def run_pipeline(job: Job) -> None:
                             )
                     except Exception:
                         report["openland_error"] = traceback.format_exc(limit=2)
+                    # Hustníky z klasifikovaných vegetačních bodů: pullauta na
+                    # single-return ČÚZK datech zeleň podhodnocuje, tady ji
+                    # aditivně domalujeme přímo z hustoty třídy 5 (406/408/410).
+                    try:
+                        from backend.lidar.greenveg import mark_dense_vegetation
+                        report["dense_veg"] = mark_dense_vegetation(
+                            cropped_preview, _pgw, Path(merged),
+                        )
+                    except Exception:
+                        report["dense_veg_error"] = traceback.format_exc(limit=2)
                     # Vyhladí blokové okraje ploch (vrstevnice/černá zůstanou ostré).
                     try:
                         smooth_landcover(cropped_preview)
